@@ -2,6 +2,10 @@ const express = require('express')
 const router = express.Router();
 const Model = require('../models/userModel');
 
+const jwt = require('jsonwebtoken');
+const userAuth = require('../middlewares/auth');
+require('dotenv').config();
+
 router.post('/add', (req, res) => {
     console.log(req.body);
 
@@ -17,7 +21,7 @@ router.post('/add', (req, res) => {
 });
 
 // getall
-router.get('/getall', (req, res) => {
+router.get('/getall', userAuth, (req, res) => {
     
     Model.find()
     .then((result) => {
@@ -88,5 +92,36 @@ router.put('/update/:id', (req, res) => {
         res.status(500).json(err);
     });
 }); 
+
+router.post('/authenticate', (req, res) => {
+    const { email, password } = req.body;
+    Model.findOne({ email, password })
+    .then((result) => {
+        
+        if(result) {
+            const { _id, email } = result;
+
+            jwt.sign({ _id, email },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' },
+                (err, token) => {
+                    if(err){
+                        console.log(err);
+                        res.status(500).json({ message: 'error creating token' })
+                    } else   {
+                        res.status(201).json({ token });
+                    }
+                }
+            )
+
+        }else{
+            res.status(403).json({ message: 'credentials Invalid' });
+        }
+
+    }).catch((err) => {
+        console.log(err);
+        req.status(500).json(err);
+    });
+});
 
 module.exports = router;
