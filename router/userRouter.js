@@ -21,7 +21,7 @@ router.post('/add', (req, res) => {
 });
 
 // getall
-router.get('/getall', userAuth, (req, res) => {
+router.get('/getall', (req, res) => {
     
     Model.find()
     .then((result) => {
